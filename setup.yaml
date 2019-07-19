@@ -1,0 +1,222 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Resources for BookMyCab photo processing workflow.
+Transform: 'AWS::Serverless-2016-10-31'
+
+Resources:
+  BookMyCabS3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      CorsConfiguration:
+        CorsRules:
+          - AllowedHeaders:
+              - "*"
+            AllowedMethods:
+              - PUT
+              - GET
+              - POST
+              - HEAD
+            AllowedOrigins:
+              - "*"
+            ExposedHeaders:
+              - ETag
+
+  ThumbnailS3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      CorsConfiguration:
+        CorsRules:
+          - AllowedHeaders:
+              - "*"
+            AllowedMethods:
+              - PUT
+              - GET
+              - POST
+              - HEAD
+            AllowedOrigins:
+              - "*"
+            ExposedHeaders:
+              - ETag
+
+  FaceDetectionFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Description: "Use Amazon Rekognition to detect faces"
+      name: face_detection
+      Handler: face_detection.lambda_handler
+      Runtime: python3.7
+      MemorySize: 256
+      Timeout: 60
+      Policies:
+        Statement:
+          - Sid: "ReadFromS3Bucket"
+            Effect: "Allow"
+            Action:
+              - s3:GetObject
+            Resource: "*"
+          - Sid: "RekognitionFace"
+            Effect: Allow
+            Action:
+              - rekognition:DetectFaces
+            Resource: "*"
+      CodeUri:
+        ./lambda-functions
+      Environment:
+        Variables:
+          Bucket_Name: !Ref ThumbnailS3Bucket
+          Bucket_Name: !Ref BookMyCabS3Bucket
+
+  FailureNotificationFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Description: "mock notification sender"
+      Handler: failure_notification.lambda_handler
+      Runtime: python3.7
+      MemorySize: 256
+      Timeout: 10
+      CodeUri:
+        ./lambda-functions
+      Environment:
+        Variables:
+          Bucket_Name: !Ref ThumbnailS3Bucket
+          Bucket_Name: !Ref BookMyCabS3Bucket
+
+
+  FaceSearchFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Description: "Use Amazon Rekognition to check if the face is already in the collection"
+      name: face_search
+      Handler: face_search.lambda_handler
+      Runtime: python3.7
+      MemorySize: 256
+      Timeout: 10
+      Policies:
+        Statement:
+          - Sid: "ReadFromS3Bucket"
+            Effect: "Allow"
+            Action:
+              - s3:GetObject
+            Resource: !Sub "arn:aws:s3:::${BookMyCabS3Bucket}/*"
+          - Sid: "SearchFace"
+            Effect: Allow
+            Action:
+              - rekognition:SearchFacesByImage
+            Resource: "*"
+      CodeUri:
+        ./lambda-functions
+      Environment:
+        Variables:
+          Bucket_Name: !Ref ThumbnailS3Bucket
+          Bucket_Name: !Ref BookMyCabS3Bucket
+
+  IndexFaceFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Description: "Index the photo into Rekognition collection"
+      name: index_face
+      Handler: index_face.lambda_handler
+      Runtime: python3.7
+      MemorySize: 256
+      Timeout: 10
+      Policies:
+        Statement:
+          - Sid: "ReadFromS3Bucket"
+            Effect: "Allow"
+            Action:
+              - s3:GetObject
+            Resource: !Sub "arn:aws:s3:::${RiderPhotoS3Bucket}/*"
+          - Sid: "SearchFace"
+            Effect: Allow
+            Action:
+              - rekognition:IndexFaces
+            Resource: "*"
+      CodeUri:
+        ./lambda-functions
+      Environment:
+        Variables:
+          Bucket_Name: !Ref ThumbnailS3Bucket
+          Bucket_Name: !Ref BookMyCabS3Bucket
+
+
+  ThumbnailFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: create_thumbnail.lambda_handler
+      name: create_thumbnail
+      Layers:
+        - !Ref PilLayer
+      Runtime: python2.7
+      MemorySize: 1536
+      Timeout: 60
+      Policies:
+        Statement:
+          - Sid: "WritetoS3ThumbnailBucket"
+            Effect: Allow
+            Action:
+              - s3:PutObject
+            Resource: !Sub "arn:aws:s3:::${ThumbnailS3Bucket}/*"
+          - Sid: "ReadFromS3"
+            Effect: Allow
+            Action:
+              - s3:GetObject
+            Resource: !Sub "arn:aws:s3:::${BookMyCabS3Bucket}/*"
+      CodeUri:
+        ./lambda-functions/create-thumbnail/create-thumbnail.py
+      Environment:
+        Variables:
+          Bucket_Name: !Ref ThumbnailS3Bucket
+          Bucket_Name: !Ref BookMyCabS3Bucket
+
+  PilLayer:
+  Type: "AWS::Lambda::LayerVersion"
+  Properties:
+    CompatibleRuntimes:
+      - python2.7
+    ContentUri: ./lambda-functions/create-thumbnail/PIL
+    Description: pil layer
+    LayerName: pil_layer
+
+
+  StateMachineRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service:
+                !Sub states.${AWS::Region}.amazonaws.com
+            Action:
+              - "sts:AssumeRole"
+      Path: "/"
+      Policies:
+        - PolicyName: "InvokeLambda"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: "InvokeLambda"
+                Effect: "Allow"
+                Action:
+                  - "lambda:InvokeFunction"
+                Resource: "*"
+      RoleName: "Invoke Lambda Function"
+
+
+Outputs:
+  FaceDetectionFunctionArn:
+    Value: !GetAtt FaceDetectionFunction.Arn
+  NotificationPlaceholderFunctionArn:
+    Value: !GetAtt FailureNotificationFunction.Arn
+  FaceSearchFunctionArn:
+    Value: !GetAtt FaceSearchFunction.Arn
+  IndexFaceFunctionArn:
+    Value: !GetAtt IndexFaceFunction.Arn
+  ThumbnailFunctionArn:
+    Value: !GetAtt ThumbnailFunction.Arn
+  BookCabS3Bucket:
+    Value: !Ref BookMyCabS3Bucket
+  ThumbnailS3Bucket:
+    Value: !Ref ThumbnailS3Bucket
+  StateMachineRole:
+    Value: !GetAtt StateMachineRole.Arn
