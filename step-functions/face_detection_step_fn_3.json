@@ -1,0 +1,68 @@
+{
+    "Comment": "Rider photo processing workflow",
+    "StartAt": "FaceDetection",
+    "States": {
+        "FaceDetection": {
+            "Type": "Task",
+            "Resource": "arn:aws:lambda:us-west-2:392658218916:function:face_detection",
+            "ResultPath": "$.detectedFaceDetails",
+            "Next": "CheckFaceDuplicate",
+            "Catch": [
+                {
+                    "ErrorEquals": [
+                        "PhotoDoesNotMeetRequirementError"
+                    ],
+                    "ResultPath": "$.errorInfo",
+                    "Next": "PhotoDoesNotMeetRequirement"
+                }
+            ]
+        },
+        "PhotoDoesNotMeetRequirement": {
+            "Type": "Task",
+            "Resource": "arn:aws:lambda:us-west-2:392658218916:function:failure_notification",
+            "End": true
+        },
+        "CheckFaceDuplicate": {
+            "Type": "Task",
+            "Resource": "arn:aws:lambda:us-west-2:392658218916:function:face_search",
+            "ResultPath": null,
+            "Next": "ParallelProcessing",
+            "Catch": [
+                {
+                    "ErrorEquals": [
+                        "FaceAlreadyExistsError"
+                    ],
+                    "ResultPath": "$.errorInfo",
+                    "Next": "PhotoDoesNotMeetRequirement"
+                }
+            ]
+        },
+        "ParallelProcessing": {
+            "Type": "Parallel",
+            "Branches": [
+                {
+                    "StartAt": "AddFaceToIndex",
+                    "States": {
+                        "AddFaceToIndex": {
+                            "Type": "Task",
+                            "Resource": "arn:aws:lambda:us-west-2:392658218916:function:index_face",
+                            "End": true
+                        }
+                    }
+                },
+                {
+                    "StartAt": "Thumbnail",
+                    "States": {
+                        "Thumbnail": {
+                            "Type": "Task",
+                            "Resource": "arn:aws:lambda:us-west-2:392658218916:function:create_thumbnail",
+                            "End": true
+                        }
+                    }
+                }
+            ],
+            "ResultPath": "$.parallelResult",
+            "End": true
+        }
+    }
+}

@@ -1,0 +1,26 @@
+{
+    "Comment": "Rider photo processing workflow",
+    "StartAt": "FaceDetection",
+    "States": {
+        "FaceDetection": {
+            "Type": "Task",
+            "Resource": "arn:aws:lambda:us-west-2:392658218916:function:face_detection",
+            "ResultPath": "$.detectedFaceDetails",
+            "End": true,
+            "Catch": [
+                {
+                    "ErrorEquals": [
+                        "PhotoDoesNotMeetRequirementError"
+                    ],
+                    "ResultPath": "$.errorInfo",
+                    "Next": "PhotoDoesNotMeetRequirement"
+                }
+            ]
+        },
+        "PhotoDoesNotMeetRequirement": {
+            "Type": "Task",
+            "Resource": "arn:aws:lambda:us-west-2:392658218916:function:failure_notification",
+            "End": true
+        }
+    }
+}
