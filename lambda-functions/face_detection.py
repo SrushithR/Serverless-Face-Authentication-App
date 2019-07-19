@@ -1,3 +1,6 @@
+"""
+    Lambda function to perform face detection on the input image
+"""
 import os
 from pprint import pprint
 from botocore.errorfactory import ClientError
@@ -6,8 +9,8 @@ import boto3
 
 client = boto3.client('rekognition')
 
+BUCKET_NAME = os.environ['IMAGE_BUCKET_NAME']
 
-# BUCKET_NAME = os.environ['BUCKET_NAME']
 
 class PhotoDoesNotMeetRequirementError(Exception):
     """Error raised when either there are multiple faces in the image uploaded/image has sunglasses"""
@@ -27,7 +30,7 @@ def lambda_handler(event, context):
         response = client.detect_faces(
             Image={
                 'S3Object': {
-                    'Bucket': 'sheeba-cloning',
+                    'Bucket': BUCKET_NAME,
                     'Name': file_name
                 }
             },
@@ -39,7 +42,6 @@ def lambda_handler(event, context):
             message = 'Invalid image format'
             print('Invalid image format')
         elif type(exception).__name__ == 'ImageTooLargeException':
-            message = 'Image uploaded too large'
             print('Image uploaded too large')
             message = 'Image uploaded too large'
         raise PhotoDoesNotMeetRequirementError(message)
