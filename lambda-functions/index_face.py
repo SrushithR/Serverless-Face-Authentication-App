@@ -1,4 +1,12 @@
+"""
+    Lambda function to index the input image to the collection
+"""
+import os
+
 import boto3
+
+BUCKET_NAME = os.environ['IMAGE_BUCKET_NAME']
+client = boto3.client('rekognition')
 
 
 def lambda_handler(event, context):
@@ -13,12 +21,12 @@ def lambda_handler(event, context):
 
     :return: indexed face details
     """
-    client = boto3.client('rekognition', region_name='us-west-2')
+
     response = client.index_faces(
         CollectionId='rider-photos',
         Image={
             'S3Object': {
-                'Bucket': 'rekognition-meetup',
+                'Bucket': BUCKET_NAME,
                 'Name': event['file_name'],
             }
         },
@@ -32,7 +40,7 @@ def lambda_handler(event, context):
 
 if __name__ == '__main__':
     event = {
-        'file_name': 'scarlett.jpg',
-        'user_id': 'Scarlett'
+        "file_name": "scarlett.jpg",
+        "user_id": "Scarlett"
     }
     print(lambda_handler(event, ''))

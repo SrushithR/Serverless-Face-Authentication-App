@@ -1,10 +1,9 @@
+"""
+    Mock lambda function to send failure notification back to the user
+"""
 
-import json
 
 def lambda_handler(event, context):
-    # TODO implement
-    print('failure occured')
-    return {
-        'statusCode': 200,
-        'body': json.dumps('Hello from Lambda!')
-    }
+    print('input to lambda: ', event)
+    # returning back the error info from the input
+    return event['errorInfo']
