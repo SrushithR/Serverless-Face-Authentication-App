@@ -30,10 +30,10 @@ CLI commands to deploy the template:
 
 1. Create an S3 bucket to upload all the local artifacts:
 
-`aws cloudformation package --s3-bucket rekognition-meetup-20June --region us-west-1 --template ./setup.yaml --output-template-file setup-sam-transformed-us-west-1.yaml 
+    ```aws cloudformation package --s3-bucket rekognition-meetup-20June --region us-west-1 --template ./setup.yaml --output-template-file setup-sam-transformed-us-west-1.yaml```
 `
 
-`aws cloudformation deploy --template-file ./setup-sam-transformed-us-west-1.yaml --stack-name face-authentication-app --capabilities CAPABILITY_IAM --region us-west-1` 
+    ```aws cloudformation deploy --template-file ./setup-sam-transformed-us-west-1.yaml --stack-name face-authentication-app --capabilities CAPABILITY_IAM --region us-west-1```
 
 3. Create step functions
 
