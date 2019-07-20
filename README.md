@@ -16,9 +16,9 @@ In this workshop, we will build a serverless face authentication/verification sy
 
 Sample CLI command to create a collection in Rekognition:
 
-`
-  aws rekognition create-collection --region us-west-2 --collection-id rider-photos
-`
+` aws rekognition create-collection --region us-west-2 --collection-id bookmycab-collection`
+
+Save the collection-id, it will be used in the lambda functions.
 
 Make sure you chose a region where is Rekognition is supported.
 
@@ -45,5 +45,12 @@ References:
  2. https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-s3-bucket.html
  3. https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-lambda-function.html
  4. https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-lambda-function.html
+ 
+ ### Cleaning Up
+ 
+ Make sure to delete the resources that were created. You can delete the cloudformation stack using the following command:
+ 
+ `aws cloudformation delete-stack --stack-name face-authentication-app --region us-west-2`
+ 
  
  
