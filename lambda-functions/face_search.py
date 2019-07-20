@@ -1,6 +1,8 @@
 import boto3
 import os
 
+IMAGE_BUCKET_NAME = os.environ['IMAGE_BUCKET_NAME']
+
 
 class FaceAlreadyExistsError(Exception):
     """Error raised when either there are multiple faces in the image uploaded/image has sunglasses"""
@@ -11,19 +13,18 @@ class FaceAlreadyExistsError(Exception):
 
 def lambda_handler(event, context):
     """
-
-    :param event:
-    :param context:
-    :return:
+        Function to do a face search in the Rekognition collection
+    :param event: input to the lambda function
+    :return: 200 if the input image is a new face
+        raises FaceAlreadyExistsError if the image is already present in the collection
     """
-    client = boto3.client('rekognition', region_name='us-west-2')
-    # collection_id = os.environ['collection_id']
-    # bucket_name = os.environ['bucket_name']
+    client = boto3.client('rekognition')
+    collection_id = event['collection_id']
     response = client.search_faces_by_image(
-        CollectionId='rider-photos',
+        CollectionId=collection_id,
         Image={
             'S3Object': {
-                'Bucket': 'rekognition-meetup',
+                'Bucket': IMAGE_BUCKET_NAME,
                 'Name': event['file_name'],
             }
         },
@@ -40,6 +41,7 @@ def lambda_handler(event, context):
 
 if __name__ == '__main__':
     event = {
-        'file_name': 'scarlett.jpg'
+        "file_name": "scarlett.jpg",
+        "collection_id": "<REPLACE WITH THE COLLECTION ID CREATED>"
     }
     print(lambda_handler(event, ''))
