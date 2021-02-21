@@ -4,7 +4,7 @@
     "States": {
         "FaceDetection": {
             "Type": "Task",
-            "Resource": "arn:aws:lambda:us-west-2:392658218916:function:face_detection",
+            "Resource": "arn:aws:lambda:us-west-2:752027857462:function:face_detection",
             "ResultPath": "$.detectedFaceDetails",
             "Next": "CheckFaceDuplicate",
             "Catch": [
@@ -19,12 +19,12 @@
         },
         "PhotoDoesNotMeetRequirement": {
             "Type": "Task",
-            "Resource": "arn:aws:lambda:us-west-2:392658218916:function:failure_notification",
+            "Resource": "arn:aws:lambda:us-west-2:752027857462:function:failure_notification",
             "End": true
         },
         "CheckFaceDuplicate": {
             "Type": "Task",
-            "Resource": "arn:aws:lambda:us-west-2:392658218916:function:face_search",
+            "Resource": "arn:aws:lambda:us-west-2:752027857462:function:face_search",
             "ResultPath": null,
             "Next": "ParallelProcessing",
             "Catch": [
@@ -45,7 +45,7 @@
                     "States": {
                         "AddFaceToIndex": {
                             "Type": "Task",
-                            "Resource": "arn:aws:lambda:us-west-2:392658218916:function:index_face",
+                            "Resource": "arn:aws:lambda:us-west-2:752027857462:function:index_face",
                             "End": true
                         }
                     }
@@ -55,7 +55,7 @@
                     "States": {
                         "Thumbnail": {
                             "Type": "Task",
-                            "Resource": "arn:aws:lambda:us-west-2:392658218916:function:create_thumbnail",
+                            "Resource": "arn:aws:lambda:us-west-2:752027857462:function:create_thumbnail",
                             "End": true
                         }
                     }

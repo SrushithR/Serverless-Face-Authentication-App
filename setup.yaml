@@ -1,19 +1,18 @@
-AWSTemplateFormatVersion: '2010-09-09'
+AWSTemplateFormatVersion: "2010-09-09"
 Description: Resources for Book My Cab photo processing workflow.
-Transform: 'AWS::Serverless-2016-10-31'
+Transform: "AWS::Serverless-2016-10-31"
 
 Resources:
   BookMyCabS3Bucket:
     Type: AWS::S3::Bucket
 
-
   ThumbnailS3Bucket:
     Type: AWS::S3::Bucket
-
 
   FaceDetectionFunction:
     Type: AWS::Serverless::Function
     Properties:
+      FunctionName: face_detection
       Description: "Lambda function to detect faces using Amazon Rekognition"
       Handler: face_detection.lambda_handler
       Runtime: python3.7
@@ -31,28 +30,26 @@ Resources:
             Action:
               - rekognition:DetectFaces
             Resource: "*"
-      CodeUri:
-        ./lambda-functions/face_detection.py
+      CodeUri: ./lambda-functions/face_detection.py
       Environment:
         Variables:
           IMAGE_BUCKET_NAME: !Ref BookMyCabS3Bucket
 
-
   FailureNotificationFunction:
     Type: AWS::Serverless::Function
     Properties:
+      FunctionName: failure_notification
       Description: "Lambda function to send failure notifications to the user"
       Handler: failure_notification.lambda_handler
       Runtime: python3.7
       MemorySize: 256
       Timeout: 10
-      CodeUri:
-        ./lambda-functions/failure_notification.py
-
+      CodeUri: ./lambda-functions/failure_notification.py
 
   FaceSearchFunction:
     Type: AWS::Serverless::Function
     Properties:
+      FunctionName: face_search
       Description: "Lambda function to search for a face in the collection"
       Handler: face_search.lambda_handler
       Runtime: python3.7
@@ -70,16 +67,15 @@ Resources:
             Action:
               - rekognition:SearchFacesByImage
             Resource: "*"
-      CodeUri:
-        ./lambda-functions/face_search.py
+      CodeUri: ./lambda-functions/face_search.py
       Environment:
         Variables:
           IMAGE_BUCKET_NAME: !Ref BookMyCabS3Bucket
 
-
   IndexFaceFunction:
     Type: AWS::Serverless::Function
     Properties:
+      FunctionName: index_face
       Description: "Lambda function to index faces using Amazon Rekognition"
       Handler: index_face.lambda_handler
       Runtime: python3.7
@@ -97,20 +93,21 @@ Resources:
             Action:
               - rekognition:IndexFaces
             Resource: "*"
-      CodeUri:
-        ./lambda-functions/index_face.py
+      CodeUri: ./lambda-functions/index_face.py
       Environment:
         Variables:
           IMAGE_BUCKET_NAME: !Ref BookMyCabS3Bucket
 
-
   ThumbnailFunction:
     Type: AWS::Serverless::Function
     Properties:
+      FunctionName: create_thumbnail
       Handler: create_thumbnail.lambda_handler
-      Runtime: python2.7
+      Runtime: python3.7
       MemorySize: 1536
       Timeout: 60
+      Layers:
+        - arn:aws:lambda:us-west-2:113088814899:layer:Klayers-python37-Pillow:11
       Policies:
         Statement:
           - Sid: "WritetoS3ThumbnailBucket"
@@ -123,13 +120,11 @@ Resources:
             Action:
               - s3:GetObject
             Resource: !Sub "arn:aws:s3:::${BookMyCabS3Bucket}/*"
-      CodeUri:
-        ./lambda-functions/create_thumbnail
+      CodeUri: ./lambda-functions/create_thumbnail.py
       Environment:
         Variables:
           IMAGE_BUCKET_NAME: !Ref BookMyCabS3Bucket
           THUMBNAIL_BUCKET_NAME: !Ref ThumbnailS3Bucket
-
 
   StateMachineRole:
     Type: "AWS::IAM::Role"
@@ -139,8 +134,7 @@ Resources:
         Statement:
           - Effect: "Allow"
             Principal:
-              Service:
-                !Sub states.${AWS::Region}.amazonaws.com
+              Service: !Sub states.${AWS::Region}.amazonaws.com
             Action:
               - "sts:AssumeRole"
       Path: "/"
@@ -154,7 +148,6 @@ Resources:
                 Action:
                   - "lambda:InvokeFunction"
                 Resource: "*"
-
 
 Outputs:
   FaceDetectionFunctionArn:

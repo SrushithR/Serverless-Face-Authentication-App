@@ -7,8 +7,11 @@ import os
 from PIL import Image
 import boto3
 
-IMAGE_BUCKET_NAME = os.environ['IMAGE_BUCKET_NAME']
-THUMBNAIL_BUCKET_NAME = os.environ['THUMBNAIL_BUCKET_NAME']
+# IMAGE_BUCKET_NAME = os.environ['IMAGE_BUCKET_NAME']
+# THUMBNAIL_BUCKET_NAME = os.environ['THUMBNAIL_BUCKET_NAME']
+
+IMAGE_BUCKET_NAME = "face-authentication-app-bookmycabs3bucket-wbgrq58xcz0j"
+THUMBNAIL_BUCKET_NAME = "face-authentication-app-thumbnails3bucket-zm5zyezkxz7d"
 
 
 def lambda_handler(event, context):
@@ -23,15 +26,16 @@ def lambda_handler(event, context):
 
     client = boto3.client('s3')
     # downloading the file to the tmp folder
-    with open('/tmp/{}'.format(file_name), 'wb') as data:
+    with open(f'/tmp/{file_name}', 'wb') as data:
         client.download_fileobj(IMAGE_BUCKET_NAME, file_name, data)
 
-    im = Image.open(file_name)
+    im = Image.open(f'/tmp/{file_name}')
     im.thumbnail(sizes)
     im.save(thumbnail_name)
 
     with open(thumbnail_name, 'rb') as data:
-        client.upload_fileobj(data, THUMBNAIL_BUCKET_NAME, 'thumbnail_{}'.format(file_name))
+        client.upload_fileobj(data, THUMBNAIL_BUCKET_NAME,
+                              'thumbnail_{}'.format(file_name))
 
 
 if __name__ == '__main__':

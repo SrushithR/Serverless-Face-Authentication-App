@@ -1,4 +1,5 @@
-# Serverless Face Authentication App 
+# Serverless Face Authentication App
+
 A simple serverless app to authenticate/verify user signups using selfies
 
 ### Description
@@ -16,41 +17,39 @@ In this workshop, we will build a serverless face authentication/verification sy
 
 Sample CLI command to create a collection in Rekognition:
 
-` aws rekognition create-collection --region us-west-2 --collection-id bookmycab-collection`
+`aws rekognition create-collection --region us-west-2 --collection-id bookmycab-collection`
 
 Save the collection-id, it will be used in the lambda functions.
 
 Make sure you chose a region where is Rekognition is supported.
 
-2. Deploy the CloudFormation template
+2. Deploy the Cloud Formation template
 
-Use the AWS console or CLI to deploy the CloudFormation template which will create the necessary S3 buckets, lambda functions and IAM roles.
+Use the AWS console or CLI to deploy the Cloud Formation template which will create the necessary S3 buckets, lambda functions and IAM roles.
 
 CLI commands to deploy the template:
 
 Create an S3 bucket to upload all the local artifacts:
 
-    aws s3api create-bucket --bucket rekognition-meetup --region us-west-2 --create-bucket-configuration LocationConstraint=us-west-2
+    aws s3api create-bucket --bucket face-authentication --region us-west-2 --create-bucket-configuration LocationConstraint=us-west-2
 
-    aws cloudformation package --s3-bucket srushith-codeops-konfhub --region us-west-2 --template ./setup.yaml --output-template-file setup-sam-transformed-us-west-2.yaml
+    aws cloudformation package --s3-bucket face-authentication --region us-west-2 --template ./setup.yaml --output-template-file setup-sam-transformed-us-west-2.yaml
 
-    aws cloudformation deploy --template-file ./setup-sam-transformed-us-west-1.yaml --stack-name face-authentication-app --capabilities CAPABILITY_IAM --region us-west-1
+    aws cloudformation deploy --template-file ./setup-sam-transformed-us-west-2.yaml --stack-name face-authentication-app --capabilities CAPABILITY_IAM --region us-west-2
 
 3. Create step functions
 
 Create step functions using the JSON files in the folder step-functions.
 
 References:
- 1. https://github.com/aws-samples/aws-serverless-workshops/tree/master/ImageProcessing
- 2. https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-s3-bucket.html
- 3. https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-lambda-function.html
- 4. https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-lambda-function.html
- 
- ### Cleaning Up
- 
- Make sure to delete the resources that were created. You can delete the cloudformation stack using the following command:
- 
- `aws cloudformation delete-stack --stack-name face-authentication-app --region us-west-2`
- 
- 
- 
+
+1.  https://github.com/aws-samples/aws-serverless-workshops/tree/master/ImageProcessing
+2.  https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-s3-bucket.html
+3.  https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-lambda-function.html
+4.  https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-lambda-function.html
+
+### Cleaning Up
+
+Make sure to delete the resources that were created. You can delete the cloud formation stack using the following command:
+
+`aws cloudformation delete-stack --stack-name face-authentication-app --region us-west-2`
